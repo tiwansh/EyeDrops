@@ -1,14 +1,44 @@
 import os
 import time
 import notify2
-from playsound import playsound
+import requests
+import json
+import setup
+from typing import List
 
-ICON_PATH = "/home/anshuman/PycharmProjects/desktop_notifier/static/images/icon.png"
+# from setup import personal_list_map, access_token, client_id
+
+# Creating the path for the icon
+ICON_PATH = "{}/static/images/icon.png".format(os.getcwd())
+print(ICON_PATH)
+
+# Initializing the notification
 notify2.init("Pomodoro Notifier")
-
 n = notify2.Notification(None, "Message", icon=ICON_PATH)
-n.set_urgency(notify2.URGENCY_NORMAL)
+n.set_urgency(notify2.URGENCY_CRITICAL)
+# Time for which the notif will be displayed in milliseconds
 n.set_timeout(10000)
+
+
+def get_all_tasks_of_specific_list(id: int) -> List:
+    """
+    Gets the list of tasks from WUNDERLIST according to input param
+
+    Args:
+        id: The id of the list that we want to extract tasks from
+
+    Returns:
+        List of tasks in the specified list(using id)
+    """
+    headers = {'X-Access-Token': setup.access_token, 'X-Client-ID': setup.client_id, 'Content-Type': 'application/json'}
+    response = requests.get('https://a.wunderlist.com/api/v1/tasks', headers=headers, params={'list_id': id})
+    data = json.loads(response.content)
+
+    list_of_tasks = []
+    for i in range(len(data)):
+        list_of_tasks.append(data[i]['title'])
+
+    return list_of_tasks
 
 
 def play_worksound() -> None:
@@ -19,7 +49,7 @@ def play_worksound() -> None:
         None
     """
     directory_path_work = "static/audio/take_break.wav"
-    playsound(os.path.join(os.getcwd(), directory_path_work))
+    os.system("aplay {}/{}".format(os.getcwd(), directory_path_work))
 
 
 def play_breaksound() -> None:
@@ -30,7 +60,7 @@ def play_breaksound() -> None:
     """
 
     directory_path_break = "static/audio/bring_back.wav"
-    playsound(os.path.join(os.getcwd(), directory_path_break))
+    os.system("aplay {}/{}".format(os.getcwd(), directory_path_break))
 
 
 def initial_mesage_displayer() -> None:
@@ -41,9 +71,14 @@ def initial_mesage_displayer() -> None:
     Returns:
         Now
     """
+    # wait for 20 seconds after bootup and then display notif
+    time.sleep(20)
     # display the message
     summary = "Welcome to the notifier application!"
     message = "I will notify you to take a 10 minutes breaks after every hour. Ciao!"
+    display_list = get_all_tasks_of_specific_list(setup.personal_list_map.groceries)
+    for task in display_list:
+        message += '\n' + task
     n.update(summary, message)
     n.show()
     play_worksound()
