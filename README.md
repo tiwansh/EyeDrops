@@ -1,4 +1,5 @@
 Python based app created on Ubuntu which notifies user to take a break after each hour.
+Application also reads from a list in the Wunderlist API an shows all the tasks added in the notification tab.
 
 Application notifies busy coders to take a break and take care of their eyes. Again it beeps after 10 minutes of breakto attract the lousy coder back to the workstation.
 
